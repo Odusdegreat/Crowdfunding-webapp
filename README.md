@@ -1,58 +1,104 @@
-_Crowdfunding DApp_
+# Crowdfunding DApp
 
-A decentralized crowdfunding platform where anyone can create campaigns and receive funding directly from supporters using blockchain technology.
+A full-stack Web3 crowdfunding project built with Solidity, Hardhat 3, React, TypeScript, and Ethers v6.
 
-Built with Solidity, Hardhat 3, React, TypeScript, Tailwind, and Ethers.js.
+## Features
 
-Overview
+- Create crowdfunding campaigns
+- Fund campaigns with ETH
+- Withdraw funds when goal is reached
+- Refund contributors if campaign fails
+- Connect wallet in frontend (MetaMask)
 
-This project demonstrates a full-stack Web3 application where:
+## Tech Stack
 
-Creators can launch fundraising campaigns.
+- Smart contracts: Solidity (`0.8.28`)
+- Blockchain tooling: Hardhat `3.x`
+- Contract interaction: Ethers `6.x`
+- Frontend: React + TypeScript + Vite + TailwindCSS
 
-Users can fund campaigns with ETH.
+## Project Structure
 
-Funds are secured by a smart contract.
+```txt
+.
+├─ contracts/
+│  ├─ Crowdfunding.sol
+│  └─ Lock.sol
+├─ test/
+│  ├─ Crowdfunding.test.ts
+│  └─ Lock.ts
+├─ scripts/
+│  └─ deploy.ts
+└─ frontend/
+   └─ (React app)
+```
 
-Campaign creators can withdraw funds once goals are met.
+## Prerequisites
 
-All transactions are recorded on the blockchain.
+- Node.js 20+ (recommended)
+- npm
+- MetaMask (for frontend wallet connection)
 
-Features
+## Install Dependencies
 
-Create a crowdfunding campaign
+Install root dependencies:
 
-Fund campaigns with ETH
+```bash
+npm install
+```
 
-Withdraw funds when goal is reached
+Install frontend dependencies:
 
-Refund contributors if campaign fails
+```bash
+cd frontend
+npm install
+```
 
-Wallet connection using MetaMask
+## Smart Contract Commands
 
-Clean UI built with TailwindCSS
+From project root:
 
-Tech Stack
-Blockchain
+Compile contracts:
 
-Solidity
+```bash
+npx hardhat compile
+```
 
-Hardhat 3
+Run tests:
 
-Ethers.js
+```bash
+npx hardhat test
+```
 
-Frontend
+Deploy locally:
 
-React
+```bash
+npx hardhat run scripts/deploy.ts
+```
 
-TypeScript
+## Frontend Commands
 
-Vite
+From `frontend/`:
 
-Tailwind CSS
+Start dev server:
 
-Web3 Tools
+```bash
+npm run dev
+```
 
-MetaMask
+Build:
 
-Hardhat Local Network
+```bash
+npm run build
+```
+
+Preview production build:
+
+```bash
+npm run preview
+```
+
+## Notes
+
+- This repo is configured for Hardhat 3 plugin style.
+- Tests and scripts use `await network.connect()` to access `ethers` and network helpers.
