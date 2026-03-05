@@ -1,10 +1,8 @@
-import { anyValue } from "@nomicfoundation/hardhat-chai-matchers/withArgs";
-import {
-  time,
-  loadFixture,
-} from "@nomicfoundation/hardhat-toolbox/network-helpers";
 import { expect } from "chai";
-import hre from "hardhat";
+import { network } from "hardhat";
+
+const { ethers, networkHelpers } = await network.connect();
+const { time, loadFixture } = networkHelpers;
 
 describe("Lock", function () {
   // We define a fixture to reuse the same setup in every test.
@@ -18,10 +16,10 @@ describe("Lock", function () {
     const unlockTime = (await time.latest()) + ONE_YEAR_IN_SECS;
 
     // Contracts are deployed using the first signer/account by default
-    const [owner, otherAccount] = await hre.ethers.getSigners();
+    const [owner, otherAccount] = await ethers.getSigners();
 
-    const Lock = await hre.ethers.getContractFactory("Lock");
-    const lock = await Lock.deploy(unlockTime, { value: lockedAmount });
+    const Lock = await ethers.getContractFactory("Lock");
+    const lock = (await Lock.deploy(unlockTime, { value: lockedAmount })) as any;
 
     return { lock, unlockTime, lockedAmount, owner, otherAccount };
   }
@@ -44,7 +42,7 @@ describe("Lock", function () {
         deployOneYearLockFixture,
       );
 
-      expect(await hre.ethers.provider.getBalance(lock.target)).to.equal(
+      expect(await ethers.provider.getBalance(lock.target)).to.equal(
         lockedAmount,
       );
     });
@@ -52,7 +50,7 @@ describe("Lock", function () {
     it("Should fail if the unlockTime is not in the future", async function () {
       // We don't use the fixture here because we want a different deployment
       const latestTime = await time.latest();
-      const Lock = await hre.ethers.getContractFactory("Lock");
+      const Lock = await ethers.getContractFactory("Lock");
       await expect(Lock.deploy(latestTime, { value: 1 })).to.be.revertedWith(
         "Unlock time should be in the future",
       );
@@ -91,7 +89,7 @@ describe("Lock", function () {
         // Transactions are sent using the first signer by default
         await time.increaseTo(unlockTime);
 
-        await expect(lock.withdraw()).not.to.be.reverted;
+        await expect(lock.withdraw()).to.not.revert(ethers);
       });
     });
 
@@ -103,9 +101,20 @@ describe("Lock", function () {
 
         await time.increaseTo(unlockTime);
 
-        await expect(lock.withdraw())
-          .to.emit(lock, "Withdrawal")
-          .withArgs(lockedAmount, anyValue); // We accept any value as `when` arg
+        const tx = await lock.withdraw();
+        const receipt = await tx.wait();
+        const withdrawalEvent = receipt?.logs
+          .map((log: any) => {
+            try {
+              return lock.interface.parseLog(log);
+            } catch {
+              return null;
+            }
+          })
+          .find((event: any) => event?.name === "Withdrawal");
+
+        expect(withdrawalEvent).to.not.equal(undefined);
+        expect(withdrawalEvent?.args[0]).to.equal(lockedAmount);
       });
     });
 
@@ -118,6 +127,7 @@ describe("Lock", function () {
         await time.increaseTo(unlockTime);
 
         await expect(lock.withdraw()).to.changeEtherBalances(
+          ethers,
           [owner, lock],
           [lockedAmount, -lockedAmount],
         );
