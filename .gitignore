@@ -22,3 +22,4 @@ coverage
 .env
 dist
 .DS_Store
+contractAddress.ts

@@ -42,12 +42,13 @@ contract Crowdfunding {
         uint256 _goal,
         uint256 _duration
     ) external returns (uint256) {
+        require(bytes(_title).length > 0, "Title required");
+        require(bytes(_description).length > 0, "Description required");
         require(_goal > 0, "Goal must be > 0");
         require(_duration > 0, "Duration must be > 0");
 
         campaignCount += 1;
         uint256 id = campaignCount;
-
         uint256 deadline = block.timestamp + _duration;
 
         campaigns[id] = Campaign({
@@ -68,6 +69,7 @@ contract Crowdfunding {
 
     function fundCampaign(uint256 _id) external payable {
         Campaign storage c = campaigns[_id];
+
         require(c.exists, "Campaign not found");
         require(block.timestamp < c.deadline, "Campaign ended");
         require(msg.value > 0, "Send ETH");
@@ -80,6 +82,7 @@ contract Crowdfunding {
 
     function withdrawFunds(uint256 _id) external {
         Campaign storage c = campaigns[_id];
+
         require(c.exists, "Campaign not found");
         require(msg.sender == c.creator, "Not creator");
         require(c.amountRaised >= c.goal, "Goal not reached");
@@ -97,6 +100,7 @@ contract Crowdfunding {
 
     function refund(uint256 _id) external {
         Campaign storage c = campaigns[_id];
+
         require(c.exists, "Campaign not found");
         require(block.timestamp >= c.deadline, "Campaign still active");
         require(c.amountRaised < c.goal, "Goal was reached");
@@ -118,27 +122,13 @@ contract Crowdfunding {
         return c;
     }
 
-    function getCampaigns(uint256 startId, uint256 limit)
-        external
-        view
-        returns (Campaign[] memory)
-    {
-        if (campaignCount == 0 || startId == 0 || startId > campaignCount || limit == 0) {
-            return new Campaign[](0);
+    function getAllCampaigns() external view returns (Campaign[] memory) {
+        Campaign[] memory allCampaigns = new Campaign[](campaignCount);
+
+        for (uint256 i = 1; i <= campaignCount; i++) {
+            allCampaigns[i - 1] = campaigns[i];
         }
 
-        uint256 end = startId + limit - 1;
-        if (end > campaignCount) end = campaignCount;
-
-        uint256 size = end - startId + 1;
-        Campaign[] memory arr = new Campaign[](size);
-
-        uint256 idx = 0;
-        for (uint256 i = startId; i <= end; i++) {
-            arr[idx] = campaigns[i];
-            idx++;
-        }
-
-        return arr;
+        return allCampaigns;
     }
 }

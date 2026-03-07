@@ -1,11 +1,15 @@
 import { ethers } from "ethers";
 
 type EthereumProvider = {
-  request: (args: { method: string; params?: unknown[] | object }) => Promise<unknown>;
+  request: (args: {
+    method: string;
+    params?: unknown[] | object;
+  }) => Promise<unknown>;
 };
 
 export async function connectWallet() {
-  const ethereum = (window as Window & { ethereum?: EthereumProvider }).ethereum;
+  const ethereum = (window as Window & { ethereum?: EthereumProvider })
+    .ethereum;
 
   if (!ethereum) {
     alert("Install MetaMask");

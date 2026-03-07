@@ -2,6 +2,33 @@ import { ethers } from "ethers";
 import { connectWallet } from "../utils/connectWallet";
 import { CONTRACT_ADDRESS } from "../contracts/contractAddress";
 import { CROWDFUNDING_ABI } from "../contracts/abi";
+import type { Campaign } from "../types/campaign";
+
+type EthereumProvider = {
+  request: (args: {
+    method: string;
+    params?: unknown[] | object;
+  }) => Promise<unknown>;
+};
+
+async function getReadContract() {
+  const ethereum = (window as Window & { ethereum?: EthereumProvider })
+    .ethereum;
+
+  if (!ethereum) {
+    throw new Error("MetaMask is not installed");
+  }
+
+  const provider = new ethers.BrowserProvider(ethereum);
+
+  return new ethers.Contract(CONTRACT_ADDRESS, CROWDFUNDING_ABI, provider);
+}
+
+async function getWriteContract() {
+  const signer = await connectWallet();
+
+  return new ethers.Contract(CONTRACT_ADDRESS, CROWDFUNDING_ABI, signer);
+}
 
 export async function createCampaign(
   title: string,
@@ -9,15 +36,7 @@ export async function createCampaign(
   goal: string,
   duration: number,
 ) {
-  const signer = await connectWallet();
-
-  if (!signer) return;
-
-  const contract = new ethers.Contract(
-    CONTRACT_ADDRESS,
-    CROWDFUNDING_ABI,
-    signer,
-  );
+  const contract = await getWriteContract();
 
   const tx = await contract.createCampaign(
     title,
@@ -27,20 +46,22 @@ export async function createCampaign(
   );
 
   await tx.wait();
+  return tx;
 }
 
-export async function fundCampaign(id: number, amount: string) {
-  const signer = await connectWallet();
+export async function fundCampaign(campaignId: number, amount: string) {
+  const contract = await getWriteContract();
 
-  const contract = new ethers.Contract(
-    CONTRACT_ADDRESS,
-    CROWDFUNDING_ABI,
-    signer,
-  );
-
-  const tx = await contract.fundCampaign(id, {
+  const tx = await contract.fundCampaign(campaignId, {
     value: ethers.parseEther(amount),
   });
 
   await tx.wait();
+  return tx;
+}
+
+export async function getAllCampaigns(): Promise<Campaign[]> {
+  const contract = await getReadContract();
+  const campaigns = await contract.getAllCampaigns();
+  return campaigns as Campaign[];
 }
